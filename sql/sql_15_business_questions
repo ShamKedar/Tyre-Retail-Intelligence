@@ -1,0 +1,194 @@
+create database tyreretail;
+use tyreretail;
+
+-- Preview tables
+select * from current_stocks;
+select * from sales;
+select * from supplier;
+
+-- Analyze tables structure
+DESCRIBE current_stocks;
+DESCRIBE sales;
+DESCRIBE supplier;
+
+-- **Business Questions**
+
+-- Q.1 What is the total revenue and total units sold?
+SELECT
+	SUM(`Revenue`) as `Total Revenue`,
+    SUM(`Units Sold`) as `Total Units Sold`
+FROM
+	sales;
+-- -> Net : 1064503596 (total revenue) &  81418 (total units sold)
+SELECT
+	SUM(CASE
+			WHEN `Transaction Type` = 'Sale'
+			THEN Revenue
+			ELSE 0
+		END) AS `Gross Total Revenue`,
+        
+	SUM(CASE
+			WHEN `Transaction Type` = 'Sale'
+            THEN `Units Sold`
+            ELSE 0
+		END) AS `Gross Units Sold`
+FROM 
+	Sales;
+-- -> Gross : 1064503596 (total revenue) &  81418 (total units sold)
+
+-- Q.2 Which brands generate the highest revenue?
+SELECT
+	Brand,
+    SUM(Revenue) AS Net_Revenue
+FROM 
+	sales
+GROUP BY 
+	Brand
+ORDER BY 
+	Net_Revenue DESC;
+-- -> BRAND_C generates highest revenue
+
+-- Q.3 Which 10 products have the highest sales?
+SELECT
+	`Product ID`,
+    `Product Name`,
+    SUM(`Units Sold`) AS `Net_Units_Sold`,
+    SUM(Revenue) AS `Net_Revenue`
+FROM
+	Sales
+GROUP BY 
+	`Product ID`,
+    `Product Name`
+ORDER BY 
+	`Net_Revenue` DESC
+LIMIT 10;
+-- -> Units sold ranges from 7875 to 409 and Revenue ranges from 210773091 to 14434887 for 10 products having highest sales through Units sold and Revenue.
+
+-- Q.4 What are the monthly sales trends?
+SELECT 
+	DATE_FORMAT(Date,'%Y-%m') AS Sales_Month,
+    SUM(`Units Sold`) AS Net_Units_Sold,
+    SUM(`Revenue`) AS Net_Revenue
+FROM 
+	sales
+GROUP BY
+	Sales_Month
+ORDER BY
+	Sales_Month;
+-- -> Plot Scatter plot using this monthly data to understand it easily
+
+-- Q.5 Which brands have the highest average selling price?
+SELECT
+	Brand,
+    COUNT(`Units Sold`) AS Net_Units_Sold,
+    ROUND(AVG(`Unit Price`),2) AS Avg_Selling_Price
+FROM
+	sales
+WHERE
+	`Transaction Type` = 'Sale'
+GROUP BY 
+	Brand
+ORDER BY
+	Avg_Selling_Price;
+-- Return have positive unit price, but they are not sales transaction. So we filter them out.
+-- -> Brand B
+
+-- Q.6 Which price tier generates the most revenue?
+SELECT
+	`Price Level`,
+	SUM(Revenue) AS Net_Revenue,
+    SUM(`Units Sold`) AS Net_Units_Sold
+FROM
+	sales
+GROUP BY
+	`Price Level`
+ORDER BY 
+	Net_Revenue DESC;
+-- -> Tier 'A'
+
+-- Q.7 What is the return rate by brand?
+SELECT
+	Brand,
+    SUM(CASE
+			WHEN `Transaction Type`='Sale'
+            THEN `Units Sold`
+            ELSE 0
+		END) AS Net_Sale,
+	ABS(SUM(CASE
+				WHEN `Transaction Type`='Return'
+                THEN `Units Sold`
+                ELSE 0
+			END)) AS Net_Return,
+	ROUND(ABS((SUM(CASE
+				WHEN `Transaction Type`='Return'
+                THEN `Units Sold`
+                ELSE 0
+			END)) /
+		SUM(ABS(`Units Sold`))) * 100, 2) AS Return_Rate		-- RETURN VALUES CONSIDERED FOR GROSS UNITS SOLD
+FROM
+	sales
+GROUP BY
+	Brand;
+-- -> BRAND_C (lOWEST RETURN RATE) < BRAND_D < BRAND_A < BRAND_B (HISHEST RETURN RATE)
+
+-- Q.8 Which products have high sales volume but high return rates?
+SELECT
+	`Product ID`,
+    `Product Name`,
+    ROUND((SUM(CASE
+			WHEN `Transaction Type`='Sale'
+            THEN `Units Sold`
+            ELSE 0
+		END) 
+	/
+    SUM(ABS(`Units Sold`))) * 100, 2) AS Sale_Percentage,		-- RETURN VALUES CONSIDERED FOR GROSS UNITS SOLD
+    
+	ROUND(ABS((SUM(CASE
+				WHEN `Transaction Type`='Return'
+                THEN `Units Sold`
+                ELSE 0
+			END))
+	/
+	SUM(ABS(`Units Sold`))) * 100, 2) AS Return_Rate,
+	SUM(ABS(`Units Sold`)) AS Gross_Units_Sold,
+    SUM(`Units Sold`) AS Net_Units_Sold
+FROM
+	sales
+GROUP BY
+	`Product ID`,
+    `Product Name`
+HAVING
+	Sale_Percentage > 80 OR Return_Rate > 5		-- Threshold assumption Sale_Percentage > 80 AND Return_Rate > 5 because there are some products with 100% return rate
+ORDER BY Return_Rate;
+
+-- Q.9 What percentage of revenue comes from the top 10 products?
+-- Assume top 10 products by revenue
+WITH Product_Revenue AS(
+	SELECT
+		`Product ID`,
+		`Product Name`,
+		SUM(Revenue) AS Revenue
+	FROM
+		sales
+	GROUP BY
+		`Product ID`,
+		`Product Name`),
+        
+Ranked_Product AS (SELECT 
+	*,
+	RANK() OVER(ORDER BY Revenue DESC) AS Ranked_Revenue
+FROM
+	Product_Revenue)
+
+SELECT
+	ROUND(
+		SUM(CASE
+				WHEN Ranked_Revenue <= 10
+				THEN Revenue
+				ELSE 0
+			END)
+        /
+        SUM(Revenue) * 100,2) AS Percentage_Revenue
+FROM
+	Ranked_Product;
+-- -> 50.29% of revenue comes from the top 10 products.
