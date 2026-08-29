@@ -192,3 +192,216 @@ SELECT
 FROM
 	Ranked_Product;
 -- -> 50.29% of revenue comes from the top 10 products.
+
+-- Q.10 Which products are potentially overstocked?
+
+-- Number of days :- Days between the starting date of specific product sold and last date of that product sold
+-- Daily average sale = Total_sale of specific product / Number of days
+-- Days of Inventory :- How many days the product will take according to the current average sale.
+-- Days of Inventory = current stock qty / daily avg sale
+
+WITH Product_Demand AS (
+	SELECT
+		`Product ID`,
+        SUM(CASE
+				WHEN `Transaction Type` = 'Sale'
+                THEN `Units Sold`
+                ELSE 0
+			END) AS Total_Sale,
+		DATEDIFF(
+			MAX(Date),
+			MIN(Date)
+		) AS Number_of_days
+	FROM
+		sales
+	GROUP BY
+		`Product ID`
+),
+
+inventory_analysis AS (
+	SELECT
+		c.`Product ID`,
+        c.`Product Name`,
+        c.`Last Restock Date`,
+        d.Total_Sale,
+        d.Number_of_days,
+        c.`Current Stock Qty`,
+        
+        ROUND(d.Total_Sale /
+        NULLIF(d.Number_of_days,0),2) AS Daily_Avg_Sale,
+        
+        ROUND(c.`Current Stock Qty` /
+        NULLIF(d.Total_Sale / d.Number_of_days, 0),2) AS Days_Of_Inventory
+	FROM
+		current_stocks c
+	JOIN
+		Product_Demand d
+	ON c.`Product ID` = d.`Product ID`
+)
+    
+SELECT
+	*
+FROM 
+	inventory_analysis
+WHERE 
+	Days_Of_Inventory > 90		-- Set threshold for more than 90 days
+ORDER BY 
+	Days_Of_Inventory DESC;
+    
+-- Q.Which fast-moving products have insufficient current stock?
+WITH product_demand AS (
+	SELECT
+		`Product ID`,
+        SUM(CASE
+				WHEN `Transaction Type` = 'Sale'
+                THEN `Units Sold`
+                ELSE 0
+			END) AS Total_Sale,
+		DATEDIFF(
+			MAX(Date),
+            MIN(Date)) AS Number_of_Days
+	FROM
+		sales
+	GROUP BY
+		`Product ID`
+),
+
+inventory_analysis AS (
+	SELECT
+		c.`Product ID`,
+        c.`Product Name`,
+        d.Total_Sale,
+        d.Number_of_Days,
+        
+        ROUND(d.Total_Sale / d.Number_of_Days, 2) AS Daily_avg_Sale,
+        
+        c.`Current Stock Qty`,
+        
+        ROUND(
+			c.`Current Stock Qty` 
+            /
+            ROUND(d.Total_Sale / d.Number_of_Days, 2)
+		) AS Days_of_Inventory
+	FROM
+		current_stocks c
+	JOIN 
+		product_demand d
+	ON 
+		c.`Product ID`=d.`Product ID`
+)
+
+SELECT
+	*
+FROM
+	inventory_analysis
+WHERE 
+	Daily_avg_Sale > 5 AND `Current Stock Qty` < 50		
+ORDER BY 
+	Daily_avg_Sale DESC;
+
+-- Assumptions in simple words, 
+-- 1. Fast-moving products are the products having the daily sales average above 5.
+-- 2. Threshold for insufficient is 50 means if product have the stock less than a 50 then it is insufficient stock.
+
+-- Q.12 Which products may run out before supplier replenishment?
+WITH product_demand AS(
+	SELECT
+        `Product ID`,
+
+        SUM(CASE
+				WHEN `Transaction Type` = 'Sale'
+                THEN `Units Sold`
+                ELSE 0
+			END) AS Total_Units_Sold,
+            
+		DATEDIFF(
+			MAX(Date),
+            MIN(Date)) AS Number_of_Days
+	FROM 
+		sales
+	GROUP BY
+		`Product ID`
+),
+
+lead_time_analysis AS (
+	SELECT
+		p.`Product ID`,
+		c.`Product Name`,
+        c.`Brand`,
+        c.`Current Stock Qty`,
+        p.Total_Units_Sold,
+        p.Number_of_Days,
+		ROUND(
+			(p.Total_Units_Sold
+            /
+            p.Number_of_Days),2) AS Daily_Avg_Sale
+	FROM
+		product_demand p
+	JOIN
+		current_stocks c
+	ON
+		p.`Product ID` = c.`Product ID`
+)
+
+SELECT
+	l.`Product ID`,
+	l.`Product Name`,
+	l.`Brand`,
+	l.Total_Units_Sold,
+	l.Number_of_Days,
+    l.Daily_Avg_Sale,
+    s.`Avg Lead Time (Days)`,
+    l.`Current Stock Qty`,
+    
+    l.Daily_Avg_Sale * s.`Avg Lead Time (Days)` AS Lead_Time_Demand,
+    
+    ABS(l.`Current Stock Qty` - (l.Daily_Avg_Sale * s.`Avg Lead Time (Days)`)) AS Stock_Deficit
+FROM
+	lead_time_analysis l
+JOIN
+	supplier s
+ON 
+	l.Brand = s.Brand
+WHERE
+	l.`Current Stock Qty` < l.Daily_Avg_Sale * s.`Avg Lead Time (Days)`;
+-- -> Stock Deficit means the number of stock that might require to fullfill the demand during lead time of supplier.
+-- Lead_Time_Demand = Avg Lead Time x Daily_Avg_Sale
+-- Stock_Deficit = Current Stock Qty - Lead_Time_Demand
+
+-- Q.13 Which supplier has the greatest lead-time variability?
+SELECT
+	*
+FROM 
+	supplier
+ORDER BY 
+	`Lead Time Std Dev (Days)` DESC;
+-- Here, Lead-time variability is represented in the `Lead Time Std Dev`(Standard Deviation) term, (i.e, Deviation from the average lead time day).
+-- Lead-time variability means the unpredictability in replenishment time or day.
+-- Higher the number of Lead-Time Variablity, higher the uncertainity.
+
+-- Q.14 Which brands combine high demand with high supplier risk?
+SELECT
+	su.Brand,
+    su.`Avg Lead Time (Days)`,
+    su.`Lead Time Std Dev (Days)`,
+    ROUND(SUM(CASE
+			WHEN sa.`Transaction Type` = 'Sale'
+            THEN sa.`Units Sold`
+            ELSE 0
+		END)/sa.Total_Sale,2)*100 AS Percent_Sale,
+	SUM(CASE
+			WHEN sa.`Transaction Type` = 'Sale'
+            THEN sa.`Units Sold`
+            ELSE 0
+		END) AS Total_Sale
+FROM
+	supplier su
+JOIN
+	total_sale sa
+ON
+	su.Brand = sa.Brand
+GROUP BY
+	sa.Brand,sa.Total_Sale
+ORDER BY
+    su.`Lead Time Std Dev (Days)` DESC;
+-- ->BRAND_C has high demand that it covers 63% of total sales but also have second highest supplier risk.
