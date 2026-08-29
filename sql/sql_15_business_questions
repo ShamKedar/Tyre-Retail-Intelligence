@@ -11,9 +11,9 @@ DESCRIBE current_stocks;
 DESCRIBE sales;
 DESCRIBE supplier;
 
--- **Business Questions**
+-- ************************* */* Business Questions */*	*************************
 
--- Q.1 What is the total revenue and total units sold?
+-- *************************Q.1 What is the total revenue and total units sold?*************************
 SELECT
 	SUM(`Revenue`) as `Total Revenue`,
     SUM(`Units Sold`) as `Total Units Sold`
@@ -36,7 +36,7 @@ FROM
 	Sales;
 -- -> Gross : 1064503596 (total revenue) &  81418 (total units sold)
 
--- Q.2 Which brands generate the highest revenue?
+-- *************************Q.2 Which brands generate the highest revenue?*************************
 SELECT
 	Brand,
     SUM(Revenue) AS Net_Revenue
@@ -48,7 +48,7 @@ ORDER BY
 	Net_Revenue DESC;
 -- -> BRAND_C generates highest revenue
 
--- Q.3 Which 10 products have the highest sales?
+-- *************************Q.3 Which 10 products have the highest sales?*************************
 SELECT
 	`Product ID`,
     `Product Name`,
@@ -64,7 +64,7 @@ ORDER BY
 LIMIT 10;
 -- -> Units sold ranges from 7875 to 409 and Revenue ranges from 210773091 to 14434887 for 10 products having highest sales through Units sold and Revenue.
 
--- Q.4 What are the monthly sales trends?
+-- *************************Q.4 What are the monthly sales trends?*************************
 SELECT 
 	DATE_FORMAT(Date,'%Y-%m') AS Sales_Month,
     SUM(`Units Sold`) AS Net_Units_Sold,
@@ -77,7 +77,7 @@ ORDER BY
 	Sales_Month;
 -- -> Plot Scatter plot using this monthly data to understand it easily
 
--- Q.5 Which brands have the highest average selling price?
+-- *************************Q.5 Which brands have the highest average selling price?*************************
 SELECT
 	Brand,
     COUNT(`Units Sold`) AS Net_Units_Sold,
@@ -93,7 +93,7 @@ ORDER BY
 -- Return have positive unit price, but they are not sales transaction. So we filter them out.
 -- -> Brand B
 
--- Q.6 Which price tier generates the most revenue?
+-- *************************Q.6 Which price tier generates the most revenue?*************************
 SELECT
 	`Price Level`,
 	SUM(Revenue) AS Net_Revenue,
@@ -106,7 +106,7 @@ ORDER BY
 	Net_Revenue DESC;
 -- -> Tier 'A'
 
--- Q.7 What is the return rate by brand?
+-- *************************Q.7 What is the return rate by brand?*************************
 SELECT
 	Brand,
     SUM(CASE
@@ -131,7 +131,7 @@ GROUP BY
 	Brand;
 -- -> BRAND_C (lOWEST RETURN RATE) < BRAND_D < BRAND_A < BRAND_B (HISHEST RETURN RATE)
 
--- Q.8 Which products have high sales volume but high return rates?
+-- *************************Q.8 Which products have high sales volume but high return rates?*************************
 SELECT
 	`Product ID`,
     `Product Name`,
@@ -161,7 +161,7 @@ HAVING
 	Sale_Percentage > 80 OR Return_Rate > 5		-- Threshold assumption Sale_Percentage > 80 AND Return_Rate > 5 because there are some products with 100% return rate
 ORDER BY Return_Rate;
 
--- Q.9 What percentage of revenue comes from the top 10 products?
+-- *************************Q.9 What percentage of revenue comes from the top 10 products?*************************
 -- Assume top 10 products by revenue
 WITH Product_Revenue AS(
 	SELECT
@@ -193,7 +193,7 @@ FROM
 	Ranked_Product;
 -- -> 50.29% of revenue comes from the top 10 products.
 
--- Q.10 Which products are potentially overstocked?
+-- *************************Q.10 Which products are potentially overstocked?*************************
 
 -- Number of days :- Days between the starting date of specific product sold and last date of that product sold
 -- Daily average sale = Total_sale of specific product / Number of days
@@ -248,7 +248,7 @@ WHERE
 ORDER BY 
 	Days_Of_Inventory DESC;
     
--- Q.Which fast-moving products have insufficient current stock?
+-- *************************Q.11 Which fast-moving products have insufficient current stock?*************************
 WITH product_demand AS (
 	SELECT
 		`Product ID`,
@@ -303,7 +303,7 @@ ORDER BY
 -- 1. Fast-moving products are the products having the daily sales average above 5.
 -- 2. Threshold for insufficient is 50 means if product have the stock less than a 50 then it is insufficient stock.
 
--- Q.12 Which products may run out before supplier replenishment?
+-- *************************Q.12 Which products may run out before supplier replenishment?*************************
 WITH product_demand AS(
 	SELECT
         `Product ID`,
@@ -368,7 +368,7 @@ WHERE
 -- Lead_Time_Demand = Avg Lead Time x Daily_Avg_Sale
 -- Stock_Deficit = Current Stock Qty - Lead_Time_Demand
 
--- Q.13 Which supplier has the greatest lead-time variability?
+-- *************************Q.13 Which supplier has the greatest lead-time variability?*************************
 SELECT
 	*
 FROM 
@@ -379,7 +379,7 @@ ORDER BY
 -- Lead-time variability means the unpredictability in replenishment time or day.
 -- Higher the number of Lead-Time Variablity, higher the uncertainity.
 
--- Q.14 Which brands combine high demand with high supplier risk?
+-- *************************Q.14 Which brands combine high demand with high supplier risk?*************************
 SELECT
 	su.Brand,
     su.`Avg Lead Time (Days)`,
@@ -405,3 +405,73 @@ GROUP BY
 ORDER BY
     su.`Lead Time Std Dev (Days)` DESC;
 -- ->BRAND_C has high demand that it covers 63% of total sales but also have second highest supplier risk.
+
+-- *************************Q.15 Which SKUs should the business prioritise for replenishment?*************************
+-- SKU for this database is Product ID
+WITH product_demand AS(
+	SELECT
+        `Product ID`,
+        SUM(CASE
+				WHEN `Transaction Type` = 'Sale'
+                THEN `Units Sold`
+                ELSE 0
+			END) AS Total_Units_Sold,
+            
+		DATEDIFF(
+			MAX(Date),
+            MIN(Date)) AS Number_of_Days
+	FROM 
+		sales
+	GROUP BY
+		`Product ID`
+),
+
+analysis AS (
+	SELECT
+		p.`Product ID`,
+		c.`Product Name`,
+        c.`Brand`,
+        c.`Current Stock Qty`,
+        p.Total_Units_Sold,
+        p.Number_of_Days,
+		ROUND(
+			(p.Total_Units_Sold
+            /
+            p.Number_of_Days),2) AS Daily_Avg_Sale
+	FROM
+		product_demand p
+	JOIN
+		current_stocks c
+	ON
+		p.`Product ID` = c.`Product ID`
+)
+
+SELECT
+	l.`Product ID`,
+	l.`Product Name`,
+	l.`Brand`,
+	l.Total_Units_Sold,
+	l.Number_of_Days,
+    l.Daily_Avg_Sale,
+    s.`Avg Lead Time (Days)`,
+    l.`Current Stock Qty`,
+    s.`Lead Time Std Dev (Days)`,
+    l.Daily_Avg_Sale * s.`Avg Lead Time (Days)` AS Lead_Time_Demand,
+    CASE
+		WHEN l.`Current Stock Qty` < l.Daily_Avg_Sale * s.`Avg Lead Time (Days)` AND s.`Lead Time Std Dev (Days)` >= 10
+        THEN 'HIGH PRIORITY'
+        
+        WHEN l.`Current Stock Qty` < l.Daily_Avg_Sale * s.`Avg Lead Time (Days)`
+        THEN 'MEDIUM PRIORITY'
+        
+        ELSE 'LOW PRIORITY'
+	END AS Replenishment_Priority
+FROM
+	analysis l
+JOIN
+	supplier s
+ON 
+	l.Brand = s.Brand;
+-- Here we set the threshold as below,
+-- 1. Less current stock that the lead-time demand
+-- 2. Unpredictability in Lead time(Lead Time Std Dev) >= 10
