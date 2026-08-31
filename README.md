@@ -42,7 +42,7 @@ The main objectives of this project are to:
 
 # 📊 Dataset
 
-* [About Dataset]()
+* [About Dataset](https://github.com/ShamKedar/Tyre-Retail-Intelligence/blob/main/data/About%20Dataset)
 * Original Dataset is available on kaggle [Tyre Retail Sales & Inventory Dataset (2024–2026)](https://www.kaggle.com/datasets/samauto/tyre-retail-sales-and-inventory-dataset-20242026?select=DS+Data+Set+-+Current+Stock.csv)
 
 ---
@@ -67,7 +67,7 @@ The Power BI report is divided into four pages.
 
 ## Page 1 — Executive Overview
 
-![Page 1]()
+![Page 1](https://github.com/ShamKedar/Tyre-Retail-Intelligence/blob/main/dashboards/screenshots%20of%20dashboard/Page_1.png)
 
 ### Purpose
 
@@ -77,7 +77,7 @@ Provides management with a high-level overview of overall retail performance.
 
 # Page 2 — Sales & Product Performance
 
-![Page 2]()
+![Page 2](https://github.com/ShamKedar/Tyre-Retail-Intelligence/blob/main/dashboards/screenshots%20of%20dashboard/Page_2.png)
 
 ### Purpose
 
@@ -87,7 +87,7 @@ Identifies the products, brands, and pricing segments driving sales performance.
 
 # Page 3 — Inventory Analysis
 
-![Page 3]()
+![Page 3](https://github.com/ShamKedar/Tyre-Retail-Intelligence/blob/main/dashboards/screenshots%20of%20dashboard/Page_3.png)
 
 ### Purpose
 
@@ -97,7 +97,7 @@ Identifies products where inventory levels may not align with demand.
 
 # Page 4 — Supplier & Inventory Risk
 
-![Page 4]()
+![Page 4](https://github.com/ShamKedar/Tyre-Retail-Intelligence/blob/main/dashboards/screenshots%20of%20dashboard/Page_4.png)
 
 ### Purpose
 
