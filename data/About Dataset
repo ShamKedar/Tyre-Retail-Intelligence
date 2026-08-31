@@ -1,0 +1,109 @@
+### About Dataset
+
+
+
+* Derived from a real tyre retailer's transaction records. Brands, suppliers and product identifiers have been anonymised, and all monetary values scaled by a constant factor. Demand patterns, seasonality and relative price relationships are preserved; absolute monetary values do not represent real prices and should not be interpreted as such.
+
+
+
+* Date - 2024–2026
+* There are 3 tables in this dataset.
+
+
+
+\------------------------------------------------------------------------------------------------------------------------
+
+
+
+### About Tables
+
+
+
+1. **Current Stock**
+
+
+
+&#x09;Point-in-time inventory snapshot covering 253 SKUs.
+Gives stock on hand, unit cost and the last restock date for each product.
+Joins to the sales file on Product ID.
+Prices are in Indian Rupees.
+
+&#x09;Size : 252 x 6
+
+&#x09;Date Range : From 2019-12-24 to 2026-02-11
+
+
+
+|**Columns**|**Meaning**|
+|-|-|
+|Product ID|SKU identifier (Primary key; joins to sales.csv)|
+|Brand|Anonymised brand label (Joins to suppliers.csv)|
+|Product Name|Tyre size and pattern code|
+|Current Stock Quantity|Units on hand at snapshot date|
+|Unit Cost|Purchase cost per tyre, scaled. (Compare with Unit Price for margin)|
+|Last Restock Date|Most recent replenishment for this SKU|
+
+
+
+
+
+2\.	**Sales**
+
+
+
+&#x09;Daily transaction records for 259 tyre SKUs from April 2024 to March 2026.
+Each row is one sale or return, with date, brand, product identifier, tyre size, units, unit price, revenue and the price tier the item sold at.
+
+&#x09;Returns appear as negative units and negative revenue.
+
+&#x09;Size : 17000 x 9
+
+&#x09;Date Range : From 2024-04-08 to 2026-03-31
+
+
+
+|**Columns**|**Meaning**|
+|-|-|
+|Date|Transaction date. Daily granularity, Apr 2024 – Mar 2026|
+|Brand|Anonymised brand label. Four values, one per supplier|
+|Product ID|SKU identifier (P0001 format). Joins to current\_stock.csv|
+|Product Name|Tyre size and pattern code (e.g. 215/70 R 16 TR28 OWL)|
+|Units Sold|Quantity (Positive for sales, negative for returns)|
+|Unit Price|Price per tyre, scaled. (Always positive, including on returns)|
+|Revenue|Units × unit price. (Negative on returns)|
+|Transaction Type|Sale or Return|
+|Price Tier|Price tier the item sold at: A (93%), X, P, U|
+
+
+
+
+
+3\.	**Supplier**
+
+
+
+&#x09;Lead time profile for the four suppliers, one per brand.
+
+&#x09;Includes average, minimum, maximum and standard deviation of lead time in days, for use in reorder point and safety stock calculations.
+
+&#x09;Joins to both other files on Brand.
+
+&#x09;Size : 5 x 7
+
+
+
+|**Columns**|**Meaning**|
+|-|-|
+|Brand|Anonymised brand label. Primary key; joins to the other two files|
+|Supplier ID|Supplier identifier (SUP0001 format)|
+|Supplier Name|Anonymised supplier name|
+|Avg Lead Time|Mean days from order to delivery|
+|Lead Time Std Dev (days)|Estimated variability|
+|Min Lead Time (days)|Fastest observed delivery|
+|Max Lead Time (days)|Slowest observed delivery|
+
+/-------------------------/
+
+### Data Issue
+
+There are sales of some product which are not in the current_stocks table. Because Date Range of sales is from 2024-04-08 to 2026-03-31 and Date Range of current_stocks is from 2019-12-24 to 2026-02-11. So current_stock should have those product in the table.
