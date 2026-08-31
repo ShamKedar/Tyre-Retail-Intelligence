@@ -134,6 +134,10 @@ Tyre-Retail-Analytics/
 │   │   ├── 📄 DAX Measures
 │   │   └── 📄 Tyre Retail Intelligence Dashboard.pbix
 │   ├── 📁 screenshots of dashboard
+│   │   ├── 🖼️ Page_1.png
+│   │   ├── 🖼️ Page_2.png
+│   │   ├── 🖼️ Page_3.png
+│   │   ├── 🖼️ Page_4.png
 │   │   └── 📕 SS of Tyre Retail Intelligence Dashboard.pdf
 │   └── 📄 Data Terms Used
 ├── 📁 data
