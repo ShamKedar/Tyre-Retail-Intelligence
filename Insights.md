@@ -1,16 +1,23 @@
 
-# 💡 Expected Business Insights
+# 💡 Business Insights
 
-The analysis is designed to help identify:
 
-* High-revenue brands and products.
-* Products responsible for a large share of total revenue.
-* Products with unusually high return rates.
-* Products with high demand and insufficient stock.
-* Products holding excessive inventory relative to demand.
-* Suppliers with longer delivery times.
-* Suppliers with less predictable delivery times.
-* Products that may run out before replenishment arrives.
-* SKUs that should receive higher replenishment priority.
+* Product *P0001* of Brand D is highest sold product, it covers *5.21%* of volume of total sold products. Still Brand D is not the highest revenue generating brand.
 
-The final insights should be based on the actual query and Power BI results rather than predetermined conclusions.
+* In the March every year there is peak in the sale.
+
+* The Brand C is the highest revenue generating brand and D is second. In top ten products *nine* are from the Brand C.
+
+* *P0099* has highest return rate of *166%* and *100%* return rate in *January 2025*.
+
+* Stcoks of Brand C are in High Risk status as they have less product than the requirement in lead-time.
+
+* Brand A and B seems over-stocked, but if we see the product wise both of them have the product with *zero* days of inventory and Brand D starts with the *2* days of inventory.
+
+* Suppliers 2 and 4 have longest average dilevery time of 60 days.
+
+* Suppliers 4 have less predictable delivery times.
+
+* Brand C has *61* and Brand B has 56 High Risk SKUs.
+
+* Brand C's SKUs should receive higher replenishment priority. As they contribute most to the revenue.
