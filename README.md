@@ -131,7 +131,7 @@ The project therefore presents these classifications as **analytical indicators*
 Tyre-Retail-Analytics/
 ├── 📁 dashboards
 │   ├── 📁 power-bi dashboard
-│   │   ├── 📄 DAX Measures
+│   │   ├── 📝 DAX Measures.md
 │   │   └── 📄 Tyre Retail Intelligence Dashboard.pbix
 │   ├── 📁 screenshots of dashboard
 │   │   ├── 🖼️ Page_1.png
@@ -139,17 +139,17 @@ Tyre-Retail-Analytics/
 │   │   ├── 🖼️ Page_3.png
 │   │   ├── 🖼️ Page_4.png
 │   │   └── 📕 SS of Tyre Retail Intelligence Dashboard.pdf
-│   └── 📄 Data Terms Used
+│   └── 📝 Data Terms Used.md
 ├── 📁 data
 │   ├── 📄 About Dataset
 │   ├── 📄 current_stocks.csv
 │   ├── 📄 sales.csv
 │   └── 📄 supplier.csv
 ├── 📁 sql
-│   ├── 📄 business questions list
-│   └── 📄 sql_15_business_questions
+│   ├── 📝 business questions list.md
+│   └── 📄 sql_15_business_questions.sql
 ├── 📄 Cleaning_Tyre_Retail_Dataset.ipynb
-├── 📄 Insights
+├── 📝 Insights.md
 └── 📝 README.md
 ```
 
